@@ -23,7 +23,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 
-import "@/styles/animations.css"; // Import the CSS file for animations
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Home() {
   const [keyword, setKeyword] = useState("");
@@ -34,33 +34,35 @@ export default function Home() {
   const [link, setLink] = useState("");
   const [timeEnd, setTimeEnd] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-
   const [lastFetch, setLastFetch] = useState(null);
 
   // Fetch data from API
   const fetchData = async () => {
     try {
-      const response = await fetch("/api/alerts");
-      const data = await response.json();
-      setAlerts(data.data);
-      setLastFetch(new Date());
+      let { data: ignoreReminder, error } = await supabase
+        .from("ignore-reminder")
+        .select("*");
+
+      if (error) console.error("Error fetching data:", error);
+      else {
+        setAlerts(ignoreReminder || []);
+        setLastFetch(new Date());
+      }
     } catch (error) {
       console.error(error);
     }
   };
 
-  // Fetch data from API
   useEffect(() => {
     fetchData();
   }, []);
 
   const alertsFiltered = alerts.filter(
     (alert) =>
-      alert.title.toLowerCase().includes(keyword.toLowerCase()) ||
-      alert.description.toLowerCase().includes(keyword.toLowerCase()) ||
-      alert.channel.toLowerCase().includes(keyword.toLowerCase())
+      alert.title?.toLowerCase().includes(keyword.toLowerCase()) ||
+      alert.description?.toLowerCase().includes(keyword.toLowerCase()) ||
+      alert.channel?.toLowerCase().includes(keyword.toLowerCase())
   );
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newAlert = {
@@ -69,29 +71,26 @@ export default function Home() {
       channel,
       description,
       reference: link,
-      time_end: new Date(timeEnd).toISOString(),
+      time_end: new Date(new Date(timeEnd).getTime() + 8 * 60 * 60 * 1000).toISOString(),
       created_at: new Date().toISOString(),
     };
-
+  
     try {
-      const response = await fetch("/api/alerts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newAlert),
-      });
-
-      if (response.ok) {
-        setAlerts([...alerts, newAlert]);
+      const { data, error } = await supabase
+        .from("ignore-reminder")
+        .insert([newAlert])
+        .select();
+  
+      if (error) console.error("Error inserting data:", error);
+      else {
+        await fetchData();
+        setIsModalOpen(false);
+        // Reset form
         setTitle("");
         setChannel("");
         setDescription("");
         setLink("");
         setTimeEnd("");
-        setIsModalOpen(false);
-      } else {
-        console.error("Failed to add alert");
       }
     } catch (error) {
       console.error(error);
@@ -203,7 +202,7 @@ export default function Home() {
                       </CollapsibleTrigger>
                     </div>
 
-                    <CollapsibleContent className="collapsible-animation">
+                    <CollapsibleContent>
                       <Separator />
                       <div className="flex flex-col gap-2 py-2 ">
                         {alert.description}
