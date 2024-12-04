@@ -97,6 +97,20 @@ export default function Home() {
     }
   };
 
+  const handleDelete = async (id) => {
+    try {
+      const { data, error } = await supabase
+        .from("ignore-reminder")
+        .delete()
+        .eq("id", id);
+  
+      if (error) console.error("Error deleting data:", error);
+      else await fetchData();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="bg-slate-100">
       <div
@@ -216,6 +230,11 @@ export default function Home() {
                             </a>
                           </Button>
                         )}
+                        <Button
+                          onClick={() => handleDelete(alert.id)}
+                          variant="danger">
+                          Delete
+                        </Button>
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
