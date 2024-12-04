@@ -118,6 +118,12 @@ export default function Home() {
         <div className="flex justify-between items-center">
           <h6 className="text-lg font-semibold">
             Alerts {lastFetch && `• Last fetch: ${lastFetch.toLocaleString()}`}
+            <Button
+              onClick={fetchData}
+              variant="ghost"
+              className="text-[12px]">
+              <RefreshCw />
+            </Button>
           </h6>
           <Button onClick={() => setIsModalOpen(true)} variant="secondary">
             Add New Alert
