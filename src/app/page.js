@@ -164,6 +164,7 @@ export default function Home() {
                   onChange={(e) => setChannel(e.target.value)}
                   required
                   label="Channel"
+                  placeholder="Channel"
                 />
                 <Input
                   type="text"
@@ -291,6 +292,7 @@ function FilterSearchInput({ searchList = [], value = "", onChange, label,...pro
         value={value}
         onChange={onChange}
         onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         {...props}
       />
 
