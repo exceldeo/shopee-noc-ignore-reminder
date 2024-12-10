@@ -22,14 +22,6 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 
 import { supabase } from "@/lib/supabaseClient";
 
@@ -270,7 +262,7 @@ export default function Home() {
   );
 }
 
-function FilterSearchInput({ searchList = [], value = "", onChange, label }) {
+function FilterSearchInput({ searchList = [], value = "", onChange, label,...props }) {
   const [isClient, setIsClient] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -290,43 +282,38 @@ function FilterSearchInput({ searchList = [], value = "", onChange, label }) {
       {label && (
         <label className="mb-1 text-sm font-medium text-gray-700">
           {label}
+          {props.required && <span className="text-red-500">*</span>}
         </label>
       )}
-      <Command
-        inputMode="text"
-        className="min-h-10 w-full rounded-md border border-input bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm relative">
-        <CommandInput
-          className="h-full"
-          value={value}
-          onValueChange={(value) => {
-            onChange({ target: { value } });
-          }}
-          placeholder="search..."
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => {
-            // Add delay to allow click event to fire on CommandItem
-            setTimeout(() => setIsFocused(false), 200);
-          }}
-        />
-        {isFocused && (
-          <CommandList className="z-10 fixed bg-white mt-12 min-w-[220px] border-2 rounded-md">
-            <CommandEmpty>No results found</CommandEmpty>
-            <CommandGroup>
-              {items.map((item) => (
-                <CommandItem
-                  key={item}
-                  onSelect={() => {
-                    onChange({ target: { value: item } });
-                    setIsFocused(false);
-                  }}
-                  className="flex items-center justify-between px-2 py-3 hover:bg-gray-100">
-                  <span>{item}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        )}
-      </Command>
+      <input
+        type="text"
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+        value={value}
+        onChange={onChange}
+        onFocus={() => setIsFocused(true)}
+        {...props}
+      />
+
+      {isFocused && (
+        <div className="absolute z-10 min-w-[220px] mt-[72px] bg-white border border-gray-200 rounded-md shadow-lg"
+        >
+          {items.filter(
+            (item) =>
+              item.toLowerCase().indexOf(value.toLowerCase()) > -1
+          ).map((item) => (
+            <div
+              key={item}
+              className="p-2 hover:bg-gray-100 cursor-pointer"
+              onClick={() => {
+                onChange({ target: { value: item } });
+                setIsFocused(false);
+              }}>
+              {item}
+            </div>
+          ))}
+          {items.length === 0 && <div className="p-2">No items found</div>}
+        </div>
+      )}
     </div>
   );
 }
