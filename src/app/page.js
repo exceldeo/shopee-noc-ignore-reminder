@@ -292,7 +292,10 @@ function FilterSearchInput({ searchList = [], value = "", onChange, label,...pro
         value={value}
         onChange={onChange}
         onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
+        onBlur={() => {
+          // Add delay to allow click event to fire on dropdown items
+          setTimeout(() => setIsFocused(false), 200);
+        }}
         {...props}
       />
 
