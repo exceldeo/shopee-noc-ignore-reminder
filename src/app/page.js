@@ -55,6 +55,8 @@ export default function Home() {
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 10 * 60 * 1000); // 5 minutes
+    return () => clearInterval(interval);
   }, []);
 
   const alertsFiltered = alerts.filter(
