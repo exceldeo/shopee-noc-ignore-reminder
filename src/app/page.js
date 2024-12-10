@@ -22,6 +22,14 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 import { supabase } from "@/lib/supabaseClient";
 
@@ -30,7 +38,7 @@ export default function Home() {
   const [alerts, setAlerts] = useState([]);
   const [title, setTitle] = useState("");
   const [channel, setChannel] = useState("");
-  const [description, setDescription] = useState("-");
+  const [description, setDescription] = useState("");
   const [link, setLink] = useState("");
   const [timeEnd, setTimeEnd] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,7 +63,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 10 * 60 * 1000); // 5 minutes
+    const interval = setInterval(fetchData, 5 * 60 * 1000); // 5 minutes
     return () => clearInterval(interval);
   }, []);
 
@@ -65,6 +73,7 @@ export default function Home() {
       alert.description?.toLowerCase().includes(keyword.toLowerCase()) ||
       alert.channel?.toLowerCase().includes(keyword.toLowerCase())
   );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newAlert = {
@@ -73,16 +82,18 @@ export default function Home() {
       channel,
       description,
       reference: link,
-      time_end: new Date(new Date(timeEnd).getTime() + 8 * 60 * 60 * 1000).toISOString(),
+      time_end: new Date(
+        new Date(timeEnd).getTime() + 8 * 60 * 60 * 1000
+      ).toISOString(),
       created_at: new Date().toISOString(),
     };
-  
+
     try {
       const { data, error } = await supabase
         .from("ignore-reminder")
         .insert([newAlert])
         .select();
-  
+
       if (error) console.error("Error inserting data:", error);
       else {
         await fetchData();
@@ -105,7 +116,7 @@ export default function Home() {
         .from("ignore-reminder")
         .delete()
         .eq("id", id);
-  
+
       if (error) console.error("Error deleting data:", error);
       else await fetchData();
     } catch (error) {
@@ -120,10 +131,7 @@ export default function Home() {
         <div className="flex justify-between items-center">
           <h6 className="text-lg font-semibold">
             Alerts {lastFetch && `• Last fetch: ${lastFetch.toLocaleString()}`}
-            <Button
-              onClick={fetchData}
-              variant="ghost"
-              className="text-[12px]">
+            <Button onClick={fetchData} variant="ghost" className="text-[12px]">
               <RefreshCw />
             </Button>
           </h6>
@@ -152,13 +160,18 @@ export default function Home() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
+                  label="Title"
                 />
-                <Input
-                  type="text"
-                  placeholder="Channel"
+                <FilterSearchInput
+                  searchList={alerts
+                    .map((alert) => alert.channel)
+                    .filter(
+                      (value, index, self) => self.indexOf(value) === index
+                    )}
                   value={channel}
                   onChange={(e) => setChannel(e.target.value)}
                   required
+                  label="Channel"
                 />
                 <Input
                   type="text"
@@ -166,6 +179,7 @@ export default function Home() {
                   value={link}
                   onChange={(e) => setLink(e.target.value)}
                   required
+                  label="Link"
                 />
                 <Input
                   type="datetime-local"
@@ -173,6 +187,7 @@ export default function Home() {
                   value={timeEnd}
                   onChange={(e) => setTimeEnd(e.target.value)}
                   required
+                  label="Time End"
                 />
               </div>
               <div className="flex mt-3">
@@ -181,6 +196,7 @@ export default function Home() {
                   placeholder="Description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  label="Description"
                 />
               </div>
               <div className="flex mt-3">
@@ -250,6 +266,67 @@ export default function Home() {
             ))}
         </div>
       </main>
+    </div>
+  );
+}
+
+function FilterSearchInput({ searchList = [], value = "", onChange, label }) {
+  const [isClient, setIsClient] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null;
+  }
+
+  // Ensure searchList is an array and not undefined
+  const items = searchList ? (Array.isArray(searchList) ? searchList : []) : [];
+
+  return (
+    <div className="flex flex-col">
+      {label && (
+        <label className="mb-1 text-sm font-medium text-gray-700">
+          {label}
+        </label>
+      )}
+      <Command
+        inputMode="text"
+        className="min-h-10 w-full rounded-md border border-input bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm relative">
+        <CommandInput
+          className="h-full"
+          value={value}
+          onValueChange={(value) => {
+            onChange({ target: { value } });
+          }}
+          placeholder="search..."
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => {
+            // Add delay to allow click event to fire on CommandItem
+            setTimeout(() => setIsFocused(false), 200);
+          }}
+        />
+        {isFocused && (
+          <CommandList className="z-10 fixed bg-white mt-12 min-w-[220px] border-2 rounded-md">
+            <CommandEmpty>No results found</CommandEmpty>
+            <CommandGroup>
+              {items.map((item) => (
+                <CommandItem
+                  key={item}
+                  onSelect={() => {
+                    onChange({ target: { value: item } });
+                    setIsFocused(false);
+                  }}
+                  className="flex items-center justify-between px-2 py-3 hover:bg-gray-100">
+                  <span>{item}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        )}
+      </Command>
     </div>
   );
 }
