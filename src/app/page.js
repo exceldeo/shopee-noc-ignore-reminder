@@ -30,7 +30,7 @@ export default function Home() {
   const [alerts, setAlerts] = useState([]);
   const [title, setTitle] = useState("");
   const [channel, setChannel] = useState("");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState("-");
   const [link, setLink] = useState("");
   const [timeEnd, setTimeEnd] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -181,7 +181,6 @@ export default function Home() {
                   placeholder="Description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  required
                 />
               </div>
               <div className="flex mt-3">
